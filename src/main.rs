@@ -5,19 +5,11 @@ use rand::distributions;
 fn insertion_sort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
 
 	/// inserts a single value into the list
-	fn insert<T: PartialOrd + Copy>(mut list: &mut Vec<T>, value: T) {
-
-		/// swaps two values
-		fn swap<T: Copy>(list: &mut Vec<T>, first: usize, second: usize) {
-			let temp = list[first];
-			list[first] = list[second];
-			list[second] = temp;
-		}
-
+	fn insert<T: PartialOrd + Copy>(list: &mut Vec<T>, value: T) {
 		let mut index = list.len(); // the current index of the value
 		list.push(value); // adds the value to the end of the list
 		while index > 0 && list[index - 1] > value {
-			swap(&mut list, index, index - 1);
+			list.swap(index, index - 1);
 			index -= 1;
 		}
 	}
@@ -30,9 +22,9 @@ fn insertion_sort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
 }
 
 /// performs an out-of-place merge sort
-fn merge_sort<T: PartialOrd + Copy + Default + std::fmt::Debug>(list: Vec<T>) -> Vec<T> {
+fn merge_sort<T: PartialOrd + Copy + Default>(list: Vec<T>) -> Vec<T> {
 
-	fn sort<T: PartialOrd + Copy + std::fmt::Debug>(from: &Vec<T>, mut dest: &mut Vec<T>, start: usize, end: usize) {
+	fn sort<T: PartialOrd + Copy>(from: &[T], mut dest: &mut Vec<T>, start: usize, end: usize) {
 		let range = end - start;
 		let mid = (range / 2) + start;
 		if range > 1 {
@@ -42,7 +34,7 @@ fn merge_sort<T: PartialOrd + Copy + Default + std::fmt::Debug>(list: Vec<T>) ->
 		}
 	}
 
-	fn merge<T: PartialOrd + Copy + std::fmt::Debug>(dest: &mut Vec<T>, start: usize, mid: usize, end: usize) {
+	fn merge<T: PartialOrd + Copy>(dest: &mut Vec<T>, start: usize, mid: usize, end: usize) {
 
 		let mut i = start; // index in first list
 		let mut j = mid; // index in second list
@@ -61,13 +53,13 @@ fn merge_sort<T: PartialOrd + Copy + Default + std::fmt::Debug>(list: Vec<T>) ->
 
 			index += 1;
 		} if i < mid {
-			for k in i..mid {
-				dest[index] = from[k];
+			for item in from.iter().take(mid).skip(i) {
+				dest[index] = *item;
 				index += 1;
 			}
 		} else if j < end {
-			for k in j..end {
-				dest[index] = from[k];
+			for item in from.iter().take(end).skip(j) {
+				dest[index] = *item;
 				index += 1;
 			}
 		}
@@ -77,6 +69,38 @@ fn merge_sort<T: PartialOrd + Copy + Default + std::fmt::Debug>(list: Vec<T>) ->
 	sort(&list, &mut sorted_list, 0, list.len());
 
 	sorted_list
+}
+
+/// Peforms a quick sort with the given pivot function
+fn quick_sort<T: PartialOrd + Copy>(list: Vec<T>, pivot_fn: &dyn Fn(Vec<T>) -> T) -> Vec<T> {
+
+	fn sort<T: PartialOrd + Copy>(list: Vec<T>, pivot_fn: &dyn Fn(Vec<T>) -> T) -> Vec<T> {
+
+		let pivot = pivot_fn(list); // select a pivot
+
+		// intialize lists
+		let mut less_list = Vec::with_capacity(list.len() / 3 + 1);
+		let mut more_list = Vec::with_capacity(list.len() / 3 + 1);
+		let mut eq_list = Vec::with_capacity(list.len() / 3 - 2);
+
+		for item in list {
+			if item < pivot {less_list.push(item)}
+			else if item > pivot {more_list.push(item)}
+			else {eq_list.push(item)}
+		}
+
+		// sort both lists
+		if less_list.len() > 1 {less_list = sort(less_list, pivot_fn)}
+		if more_list.len() > 1 {more_list = sort(more_list, pivot_fn)}
+
+		// combine lists
+		less_list.append(&mut eq_list);
+		less_list.append(&mut more_list);
+
+		less_list
+	}
+
+	sort(list.clone(), pivot_fn)
 }
 
 /// Randomly creates a list of a specifed type and length
@@ -114,7 +138,7 @@ mod test {
 		}
 
 		fn long_list() -> Vec<usize> {
-			generate_list::<usize>(u8::MAX as usize)
+			generate_list::<usize>(std::u8::MAX as usize)
 		}
 
 		check_sorted(sort_fn(long_list()))
