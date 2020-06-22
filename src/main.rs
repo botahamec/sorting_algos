@@ -1,6 +1,10 @@
 use rand::prelude::*;
 use rand::distributions;
 
+use chalk_rs::Chalk;
+
+use std::time::Instant;
+
 /// performs a out-of-place insertion sort
 fn insertion_sort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
 
@@ -100,7 +104,7 @@ fn quick_sort<T: PartialOrd + Copy>(list: Vec<T>, pivot_fn: &dyn Fn(&[T]) -> T) 
 		less_list
 	}
 
-	sort(list.clone(), pivot_fn)
+	sort(list, pivot_fn)
 }
 
 fn counting_sort(list: Vec<usize>) -> Vec<usize> {
@@ -112,12 +116,13 @@ fn counting_sort(list: Vec<usize>) -> Vec<usize> {
 	let mut min = std::usize::MAX;
 
 	for item in &list {
-		if items.contains_key(item) {
-			let value = items.get(item).unwrap();
-			items.insert(*item, value + 1);
-		} else {
-			items.insert(*item, 1);
-		}
+		match items.get(item) {
+			Some(v) => {
+				let v = *v;
+				items.insert(*item, v + 1)
+			}
+			None => items.insert(*item, 1)
+		};
 
 		if *item > max {max = *item;}
 		if *item < min {min = *item;}
@@ -133,7 +138,6 @@ fn counting_sort(list: Vec<usize>) -> Vec<usize> {
 			}
 		}
 
-		println!("{}", current);
 		current += 1;
 	}
 
@@ -205,12 +209,48 @@ fn generate_list(length: usize, max: usize) -> Vec<usize> {
 	list
 }
 
-fn run_test(msg: &str, length: usize, max: usize) {
-	
+fn timer(msg: &str, sort_fn: &dyn Fn(Vec<usize>) -> Vec<usize>, list: Vec<usize>) {
+
+	let normal = Chalk::new();
+	normal.print(&msg);
+	normal.print(&" ... ");
+
+	let start = Instant::now();
+	sort_fn(list);
+	let end = Instant::now();
+
+	let time = (end - start).as_secs_f32();
+	let time_frac = time.log(1.04).abs().round() as u8;
+
+	Chalk::new().rgb(255 - time_frac, time_frac, 0).println(&format!("{}", time));
+}
+
+fn run_test(msg: &str, list: Vec<usize>) {
+	println!();
+
+	let mut bold = Chalk::new();
+	let bold = bold.bold();
+	let normal = Chalk::new();
+
+	bold.print(&"Test: ");
+	normal.println(&msg);
+
+	timer("Insertion sort                         ", &insertion_sort, list.clone());
+	timer("Merge sort                             ", &merge_sort, list.clone());
+	timer("Quick Sort with first element as pivot ", &first_element_quicksort, list.clone());
+	timer("Quick Sort with middle element as pivot", &middle_element_quicksort, list.clone());
+	timer("Quick Sort with last element as pivot  ", &last_element_quicksort, list.clone());
+	timer("Quick Sort with random element as pivot", &random_quicksort, list.clone());
+	timer("Middle of three Quick Sort             ", &mid_of_three_quicksort, list.clone());
+	timer("Counting Sort                          ", &counting_sort, list);
 }
 
 fn main() {
-	
+	run_test("Short list (1,000 elements, 0-1,000)", generate_list(1000, 1000));
+	run_test("Long list (20,000 elements, 0-1,000)", generate_list(20_000, 1000));
+	run_test("Small values (2,000 elements, 0-200)", generate_list(2000, 200));
+	run_test("Large values (2,000 elements, 0-1,000,000)", generate_list(2000, 1_000_000));
+	run_test("Already Sorted List (5,000 elements, 0-1,000)", merge_sort(generate_list(5000, 1000)));
 }
 
 mod test {
@@ -234,16 +274,6 @@ mod test {
 		}
 
 		check_sorted(sort_fn(long_list()))
-	}
-
-	fn check_sorted(list: Vec<usize>) {
-		if list.len() > 1 {
-			for index in 1..list.len() {
-				if list[index] < list[index - 1] {
-					panic!("Error at {}\n{:?}", index, list);
-				}
-			}
-		}
 	}
 
 	#[test]
