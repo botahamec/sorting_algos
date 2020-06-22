@@ -103,11 +103,13 @@ fn quick_sort<T: PartialOrd + Copy>(list: Vec<T>, pivot_fn: &dyn Fn(&[T]) -> T) 
 	sort(list.clone(), pivot_fn)
 }
 
-fn counting_sort(list: Vec<u8>) -> Vec<u8> {
+fn counting_sort(list: Vec<usize>) -> Vec<usize> {
 
 	use std::collections::HashMap;
 
-	let mut items = HashMap::<u8, usize>::with_capacity(list.len());
+	let mut items = HashMap::<usize, usize>::with_capacity(list.len());
+	let mut max = 0usize;
+	let mut min = std::usize::MAX;
 
 	for item in &list {
 		if items.contains_key(item) {
@@ -116,12 +118,15 @@ fn counting_sort(list: Vec<u8>) -> Vec<u8> {
 		} else {
 			items.insert(*item, 1);
 		}
+
+		if *item > max {max = *item;}
+		if *item < min {min = *item;}
 	}
 
 	let mut sorted_list = Vec::with_capacity(list.len());
-	let mut current = 0;
+	let mut current = min;
 
-	while current < std::u8::MAX {
+	while current < max {
 		if let Some(n) = items.get(&current) {
 			for _i in 0..*n {
 				sorted_list.push(current);
@@ -188,17 +193,20 @@ fn mid_of_three_quicksort<T: Ord + Copy>(list: Vec<T>) -> Vec<T> {
 }
 
 /// Randomly creates a list of a specifed type and length
-fn generate_list<T>(length: usize) -> Vec<T>
-		where distributions::Standard: distributions::Distribution<T> {
+fn generate_list(length: usize, max: usize) -> Vec<usize> {
 
 	// creates a list with the correct capacity
-	let mut list = Vec::<T>::with_capacity(length);
+	let mut list = Vec::with_capacity(length);
 	let mut rng = rand::thread_rng();
 
 	// fills the list with randomly generated elements
-	for _i in 0..length {list.push(rng.gen());}
+	for _i in 0..length {list.push(rng.gen::<usize>() % max);}
 
 	list
+}
+
+fn run_test(msg: &str, length: usize, max: usize) {
+	
 }
 
 fn main() {
@@ -209,9 +217,9 @@ mod test {
 	use super::*;
 
 	#[allow(dead_code)]
-	fn check_sort_fn(sort_fn: &dyn Fn(Vec<u8>) -> Vec<u8>) {
+	fn check_sort_fn(sort_fn: &dyn Fn(Vec<usize>) -> Vec<usize>) {
 
-		fn check_sorted(list: Vec<u8>) {
+		fn check_sorted(list: Vec<usize>) {
 			if list.len() > 1 {
 				for index in 1..list.len() {
 					if list[index] < list[index - 1] {
@@ -221,8 +229,8 @@ mod test {
 			}
 		}
 
-		fn long_list() -> Vec<u8> {
-			generate_list::<u8>(std::u8::MAX as usize)
+		fn long_list() -> Vec<usize> {
+			generate_list(256, 256)
 		}
 
 		check_sorted(sort_fn(long_list()))
