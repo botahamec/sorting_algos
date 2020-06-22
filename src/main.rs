@@ -222,7 +222,7 @@ fn timer(msg: &str, sort_fn: &dyn Fn(Vec<usize>) -> Vec<usize>, list: Vec<usize>
 	let time = (end - start).as_secs_f32();
 	let time_frac = time.log(1.04).abs().round() as u8;
 
-	Chalk::new().rgb(255 - time_frac, time_frac, 0).println(&format!("{}", time));
+	Chalk::new().rgb(255 - time_frac, time_frac, 0).println(&format!("{} ms", time * 1000.0));
 }
 
 fn run_test(msg: &str, list: Vec<usize>) {
@@ -246,6 +246,7 @@ fn run_test(msg: &str, list: Vec<usize>) {
 }
 
 fn main() {
+	run_test("Normal (5,000 elements, 0-1,000)", generate_list(5000, 1000));
 	run_test("Short list (1,000 elements, 0-1,000)", generate_list(1000, 1000));
 	run_test("Long list (20,000 elements, 0-1,000)", generate_list(20_000, 1000));
 	run_test("Small values (2,000 elements, 0-200)", generate_list(2000, 200));
