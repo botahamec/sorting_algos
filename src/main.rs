@@ -72,16 +72,16 @@ fn merge_sort<T: PartialOrd + Copy + Default>(list: Vec<T>) -> Vec<T> {
 }
 
 /// Peforms a quick sort with the given pivot function
-fn quick_sort<T: PartialOrd + Copy>(list: Vec<T>, pivot_fn: &dyn Fn(Vec<T>) -> T) -> Vec<T> {
+fn quick_sort<T: PartialOrd + Copy>(list: Vec<T>, pivot_fn: &dyn Fn(&[T]) -> T) -> Vec<T> {
 
-	fn sort<T: PartialOrd + Copy>(list: Vec<T>, pivot_fn: &dyn Fn(Vec<T>) -> T) -> Vec<T> {
+	fn sort<T: PartialOrd + Copy>(list: Vec<T>, pivot_fn: &dyn Fn(&[T]) -> T) -> Vec<T> {
 
-		let pivot = pivot_fn(list); // select a pivot
+		let pivot = pivot_fn(&list); // select a pivot
 
 		// intialize lists
 		let mut less_list = Vec::with_capacity(list.len() / 3 + 1);
 		let mut more_list = Vec::with_capacity(list.len() / 3 + 1);
-		let mut eq_list = Vec::with_capacity(list.len() / 3 - 2);
+		let mut eq_list = Vec::with_capacity(list.len() / 3);
 
 		for item in list {
 			if item < pivot {less_list.push(item)}
@@ -101,6 +101,90 @@ fn quick_sort<T: PartialOrd + Copy>(list: Vec<T>, pivot_fn: &dyn Fn(Vec<T>) -> T
 	}
 
 	sort(list.clone(), pivot_fn)
+}
+
+fn counting_sort(list: Vec<u8>) -> Vec<u8> {
+
+	use std::collections::HashMap;
+
+	let mut items = HashMap::<u8, usize>::with_capacity(list.len());
+
+	for item in &list {
+		if items.contains_key(item) {
+			let value = items.get(item).unwrap();
+			items.insert(*item, value + 1);
+		} else {
+			items.insert(*item, 1);
+		}
+	}
+
+	let mut sorted_list = Vec::with_capacity(list.len());
+	let mut current = 0;
+
+	while current < std::u8::MAX {
+		if let Some(n) = items.get(&current) {
+			for _i in 0..*n {
+				sorted_list.push(current);
+			}
+		}
+
+		println!("{}", current);
+		current += 1;
+	}
+
+	sorted_list
+}
+
+
+fn first_element_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
+	fn first_element<T: Copy>(list: &[T]) -> T {
+		list[0]
+	}
+
+	quick_sort(list, &first_element)
+}
+
+fn last_element_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
+	fn last_element<T: Copy>(list: &[T]) -> T {
+		list[list.len() - 1]
+	}
+
+	quick_sort(list, &last_element)
+}
+
+fn middle_element_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
+	fn middle_element<T: Copy>(list: &[T]) -> T {
+		list[list.len() / 2]
+	}
+
+	quick_sort(list, &middle_element)
+}
+
+fn random_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T>
+		where distributions::Standard: distributions::Distribution<T> {
+	fn random_element<T: Copy>(list: &[T]) -> T {
+		list[rand::random::<usize>() % list.len()]
+	}
+
+	quick_sort(list, &random_element)
+}
+
+fn mid_of_three_quicksort<T: Ord + Copy>(list: Vec<T>) -> Vec<T> {
+	fn best_of_three<T: Ord + Copy>(list: &[T]) -> T {
+
+		fn mid_of_three<T: Ord + Copy>(a: T, b: T, c: T) -> T {
+			use std::cmp::{min, max};
+			max(min(a, b), min(max(a, b), c))
+		}
+
+		let first_element = list[0];
+		let middle_element = list[list.len() / 2];
+		let last_element = list[list.len() - 1];
+
+		mid_of_three(first_element, middle_element, last_element)
+	}
+
+	quick_sort(list, &best_of_three)
 }
 
 /// Randomly creates a list of a specifed type and length
@@ -125,9 +209,9 @@ mod test {
 	use super::*;
 
 	#[allow(dead_code)]
-	fn check_sort_fn(sort_fn: &dyn Fn(Vec<usize>) -> Vec<usize>) {
+	fn check_sort_fn(sort_fn: &dyn Fn(Vec<u8>) -> Vec<u8>) {
 
-		fn check_sorted(list: Vec<usize>) {
+		fn check_sorted(list: Vec<u8>) {
 			if list.len() > 1 {
 				for index in 1..list.len() {
 					if list[index] < list[index - 1] {
@@ -137,8 +221,8 @@ mod test {
 			}
 		}
 
-		fn long_list() -> Vec<usize> {
-			generate_list::<usize>(std::u8::MAX as usize)
+		fn long_list() -> Vec<u8> {
+			generate_list::<u8>(std::u8::MAX as usize)
 		}
 
 		check_sorted(sort_fn(long_list()))
@@ -162,5 +246,19 @@ mod test {
 	#[test]
 	fn test_merge_sort() {
 		check_sort_fn(&merge_sort)
+	}
+
+	#[test]
+	fn test_quick_sort() {
+		check_sort_fn(&first_element_quicksort);
+		check_sort_fn(&middle_element_quicksort);
+		check_sort_fn(&last_element_quicksort);
+		check_sort_fn(&random_quicksort);
+		check_sort_fn(&mid_of_three_quicksort);
+	}
+
+	#[test]
+	fn test_counting_sort() {
+		check_sort_fn(&counting_sort)
 	}
 }
