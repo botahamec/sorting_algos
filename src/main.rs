@@ -30,11 +30,11 @@ fn merge_sort<T: PartialOrd + Copy + Default>(list: Vec<T>) -> Vec<T> {
 
 	fn sort<T: PartialOrd + Copy>(from: &[T], mut dest: &mut Vec<T>, start: usize, end: usize) {
 		let range = end - start;
-		let mid = (range / 2) + start;
-		if range > 1 {
-			sort(from, dest, start, mid);
+		let mid = (range / 2) + start; // find the midpoint of the list
+		if range > 1 { // don't sort if the list is already of length one
+			sort(from, dest, start, mid); // sort each half
 			sort(from, dest, mid, end);
-			merge(&mut dest, start, mid, end);
+			merge(&mut dest, start, mid, end); // merge the halves
 		}
 	}
 
@@ -56,6 +56,8 @@ fn merge_sort<T: PartialOrd + Copy + Default>(list: Vec<T>) -> Vec<T> {
 			}
 
 			index += 1;
+
+		// once one end of a list is reached, add all of the elements of the other list
 		} if i < mid {
 			for item in from.iter().take(mid).skip(i) {
 				dest[index] = *item;
@@ -87,6 +89,7 @@ fn quick_sort<T: PartialOrd + Copy>(list: Vec<T>, pivot_fn: &dyn Fn(&[T]) -> T) 
 		let mut more_list = Vec::with_capacity(list.len() / 3 + 1);
 		let mut eq_list = Vec::with_capacity(list.len() / 3);
 
+		// put the elements into each list
 		for item in list {
 			if item < pivot {less_list.push(item)}
 			else if item > pivot {more_list.push(item)}
@@ -111,10 +114,13 @@ fn counting_sort(list: Vec<usize>) -> Vec<usize> {
 
 	use std::collections::HashMap;
 
+	// used to count the number of each item
 	let mut items = HashMap::<usize, usize>::with_capacity(list.len());
-	let mut max = 0usize;
-	let mut min = std::usize::MAX;
 
+	let mut max = 0usize; // largest element
+	let mut min = std::usize::MAX; // smallest element
+
+	// insert each element into the hashmap
 	for item in &list {
 		match items.get(item) {
 			Some(v) => {
@@ -124,6 +130,7 @@ fn counting_sort(list: Vec<usize>) -> Vec<usize> {
 			None => items.insert(*item, 1)
 		};
 
+		// update the min and max if necessary
 		if *item > max {max = *item;}
 		if *item < min {min = *item;}
 	}
@@ -131,7 +138,8 @@ fn counting_sort(list: Vec<usize>) -> Vec<usize> {
 	let mut sorted_list = Vec::with_capacity(list.len());
 	let mut current = min;
 
-	while current < max {
+	// put the elements into a sorted list
+	while current <= max {
 		if let Some(n) = items.get(&current) {
 			for _i in 0..*n {
 				sorted_list.push(current);
@@ -144,7 +152,7 @@ fn counting_sort(list: Vec<usize>) -> Vec<usize> {
 	sorted_list
 }
 
-
+/// uses the first element as a pivot
 fn first_element_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
 	fn first_element<T: Copy>(list: &[T]) -> T {
 		list[0]
@@ -153,6 +161,7 @@ fn first_element_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
 	quick_sort(list, &first_element)
 }
 
+/// uses the last element as a pivot
 fn last_element_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
 	fn last_element<T: Copy>(list: &[T]) -> T {
 		list[list.len() - 1]
@@ -161,6 +170,7 @@ fn last_element_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
 	quick_sort(list, &last_element)
 }
 
+/// uses the middle element as a pivot
 fn middle_element_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
 	fn middle_element<T: Copy>(list: &[T]) -> T {
 		list[list.len() / 2]
@@ -169,6 +179,7 @@ fn middle_element_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T> {
 	quick_sort(list, &middle_element)
 }
 
+/// picks a random pivot
 fn random_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T>
 		where distributions::Standard: distributions::Distribution<T> {
 	fn random_element<T: Copy>(list: &[T]) -> T {
@@ -178,6 +189,7 @@ fn random_quicksort<T: PartialOrd + Copy>(list: Vec<T>) -> Vec<T>
 	quick_sort(list, &random_element)
 }
 
+/// looks at the first, middle, and last elements, and chooses whichever is in the middle
 fn mid_of_three_quicksort<T: Ord + Copy>(list: Vec<T>) -> Vec<T> {
 	fn best_of_three<T: Ord + Copy>(list: &[T]) -> T {
 
@@ -246,12 +258,12 @@ fn run_test(msg: &str, list: Vec<usize>) {
 }
 
 fn main() {
-	run_test("Normal (5,000 elements, 0-1,000)", generate_list(5000, 1000));
-	run_test("Short list (1,000 elements, 0-1,000)", generate_list(1000, 1000));
-	run_test("Long list (20,000 elements, 0-1,000)", generate_list(20_000, 1000));
-	run_test("Small values (2,000 elements, 0-200)", generate_list(2000, 200));
-	run_test("Large values (2,000 elements, 0-1,000,000)", generate_list(2000, 1_000_000));
-	run_test("Already Sorted List (5,000 elements, 0-1,000)", merge_sort(generate_list(5000, 1000)));
+	run_test("Normal (5,000 elements, 0-1,000)             ", generate_list(5000,   1000));
+	run_test("Short list (1,000 elements, 0-1,000)         ", generate_list(1000,   1000));
+	run_test("Long list (20,000 elements, 0-1,000)         ", generate_list(20_000, 1000));
+	run_test("Small values (2,000 elements, 0-200)         ", generate_list(2000,   200));
+	run_test("Large values (2,000 elements, 0-1,000,000)   ", generate_list(2000,   1_000_000));
+	run_test("Already Sorted List (5,000 elements, 0-1,000)", counting_sort(generate_list(5000, 1000)));
 }
 
 mod test {
