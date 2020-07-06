@@ -1,5 +1,5 @@
 # sorting_algos
-A some sorting algorithms, benchmarked
+A some sorting algorithms, benchmarked. Made for this article: https://www.section.io/engineering-education/sorting-algorithms/
 
 ## Implementation
 I've implemented the following algorithms in both Python and Rust:
