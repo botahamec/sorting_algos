@@ -1,7 +1,11 @@
 def counting_sort(list):
+	
+	if len(list) == 0:
+		return list
+	
 	items = {} # a hashmap we'll use to store all of the items
-	range_max = 0 # current maximum of the list
-	range_min = 18446744070000000000  # current minimum of the list
+	range_max = list[0] # current maximum of the list
+	range_min = list[0]  # current minimum of the list
 
 	for item in list:
 		if item in items:
